@@ -248,7 +248,6 @@ def emit_event(store_id, store, event_type):
 
 print(f"Starting bookstore simulation for {SIM_DAY.date()} (8 AM → 5 PM compressed into 30 minutes)")
 
-# Missing function in your original script — adding it back
 def schedule_next(event_type, store_id, weight):
     low, high = EVENT_CADENCE[event_type]
     return time.time() + random.uniform(low / weight, high / weight)
