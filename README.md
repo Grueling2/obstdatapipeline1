@@ -1,16 +1,16 @@
 Data engineering platform simulating a multi‑location bookstore. Includes event streaming (Redpanda/Kafka), distributed processing (Spark), workflow orchestration (Airflow), Delta Lake (Bronze/Silver), MinIO S3 storage, MariaDB SQL integration, and interactive Gold business intelligence via Databricks.  
 <img width="1866" height="1040" alt="image" src="https://github.com/user-attachments/assets/51e11c01-552b-41be-a840-5886f5a05c73" />  
-
-
+  
+  
 This project simulates an end-to-end data engineering pipeline for a simulated three-location bookstore company in Wisconsin.
 The custom Docker container 'bookstore_producer' simulates business events with weights based on store location and categories of business events (browsing, returned items, sales, add-to-cart).  
 The full pipeline accounts for raw business event creation, event streaming, distributed processing, workflow orchestration, lakehouse modeling and analytics.  
-
+  
 Infrastructure is a fully containerized environment, established via docker-compose.yml, as well as secrets stored in .env and spark/conf/spark-defaults.conf  
-
+  
 <img width="364" height="970" alt="image" src="https://github.com/user-attachments/assets/79f4df97-5f5e-4f30-8e4d-cf4e72bb1aae" />  
-
-
+  
+  
 Final data result, in addition to Bronze/Silver tables:  
 Gold business metrics displayed in an interactive dashboard on Databricks:  
 1. Total sales today  
@@ -30,9 +30,9 @@ Technologies Used:
 -Jupyter Notebooks: analytics  
 -Docker Compose: infrastructure automation  
 -Python: pipeline logic  
-
+  
 Workflow automation: Apache Airflow DAGs which orchestrate the following pipelines  
-
+  
 dag_catalog_loader:  
 1. Bookstore_producer container runs catalog_loader.py script  
 2. NYT API grabs real catalog of best selling books in various genres  
@@ -48,7 +48,7 @@ dag_run_bookstore_simulation_day_cycle:
 5. Increment day_index to prepare for next business day
 6. Export MariaDB tables into CSV files and placing into MinIO for processing later  
 <img width="2070" height="760" alt="image" src="https://github.com/user-attachments/assets/2ce31e6a-9983-4995-89fc-17a83ebb5812" />  
-
+  
   
   
 dag_spark_job_build_bronze:  
@@ -61,22 +61,25 @@ dag_spark_job_build_silver-sales and dag_spark_job_build_silver_returns:
 1. Spark Streaming reads Delta Lake Bronze table data for that partitioned business day  
 2. Delta lake Silver table with just sales data and just returns data is written continuously with structured streaming on MinIO S3 bucket  
 <img width="1728" height="886" alt="image" src="https://github.com/user-attachments/assets/e5f2056c-19b5-4112-9708-282d0b17bd33" />
-
+  
+  
 Databricks scheduled job:  
 1. Collects CSV files from MinIO local storage
 2. Converts into Delta Lake tables in Bronze and Silver categories on AWS S3 bucket for processing in Gold dashboard  
 <img width="783" height="820" alt="image" src="https://github.com/user-attachments/assets/9fd14d0c-6a9e-420d-b421-3e44b235e811" />  
   
+  
 Redpanda Raw Events Example:  
 <img width="540" height="277" alt="image" src="https://github.com/user-attachments/assets/2d460222-fc5a-403b-ab46-eed8aa3854db" />  
-
+  
+  
 Example Silver Sales query results:  
 <img width="659" height="322" alt="image" src="https://github.com/user-attachments/assets/39ad1f78-0d36-4c82-b9f9-10c84d8b5941" />  
-
+  
+  
 Example Schema for books table in MariaDB:  
 <img width="1632" height="191" alt="image" src="https://github.com/user-attachments/assets/4d6a5add-b1a2-4fad-b7c0-cc6e1b2f0490" />  
-
+  
+  
 Example snippet from Gold Jupyter Notebook  
 <img width="1264" height="734" alt="image" src="https://github.com/user-attachments/assets/264fba1b-5acb-4b06-8669-80936e467790" />
-
- 
