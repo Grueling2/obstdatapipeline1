@@ -69,7 +69,7 @@ Redpanda Raw Events Example:
 <img width="540" height="277" alt="image" src="https://github.com/user-attachments/assets/2d460222-fc5a-403b-ab46-eed8aa3854db" />  
   
   
-Example Silver Sales query results:  
+Example Silver Sales query results from a Jupyter Notebook file:  
 <img width="659" height="322" alt="image" src="https://github.com/user-attachments/assets/39ad1f78-0d36-4c82-b9f9-10c84d8b5941" />  
   
   
