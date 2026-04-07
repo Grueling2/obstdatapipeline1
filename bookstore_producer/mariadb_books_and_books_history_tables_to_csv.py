@@ -26,7 +26,7 @@ def export_table(table_name, output_path):
 
 def upload_to_minio(local_path, object_name):
     client = Minio(
-        os.getenv("MINIO_ENDPOINT"),      # e.g. "minio:9000"
+        os.getenv("MINIO_ENDPOINT_INTERNAL"),      # e.g. "minio:9000"
         access_key=os.getenv("MINIO_ROOT_USER"),
         secret_key=os.getenv("MINIO_ROOT_PASSWORD"),
         secure=False
