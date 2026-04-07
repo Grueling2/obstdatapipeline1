@@ -1,7 +1,7 @@
 Data engineering pipeline (Raw Events -> Bronze -> Silver -> Gold) simulating a multi‑location bookstore company in Wisconsin. Includes event streaming (Redpanda/Kafka), distributed processing (Spark), workflow orchestration (Airflow), Delta Lake (Bronze/Silver), MinIO S3-compatible local storage and AWS S3 cloud storage, MariaDB SQL integration, and interactive Gold business intelligence dashboards via Databricks.  
     
 Project infrastructure uses containers established via docker-compose.yml, as well as secrets stored in .env and spark/conf/spark-defaults.conf  
-The custom Docker container 'bookstore_producer' simulates business events with various weighted preferences based on store location and categories of business events (browsing, returned items, sales, add-to-cart).  
+The custom Docker container 'bookstore_producer' simulates business events with various weighted preferences, in combination with a range of randomness, based on store location and categories of business events (browsing, returned items, sales, add-to-cart). After a simulated business day concludes, the simulation reflects on the real sales data and updates values associated with book popularity, then applies a natural decay to the general popularity of all books, refreshing the logic on which books are more likely to be purchased in the next business day.  
 <img width="364" height="970" alt="image" src="https://github.com/user-attachments/assets/79f4df97-5f5e-4f30-8e4d-cf4e72bb1aae" />  
   
 Databricks interactive dashboard showing the following Gold-tier metrics for business stakeholders:  
