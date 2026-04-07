@@ -14,8 +14,8 @@ Databricks interactive dashboard showing the following Gold-tier metrics for bus
 Technologies Used:  
 -Databricks: analytics and business intelligence  
 -Redpanda/Kafka: event streaming  
--Apache Spark: distributed ETL  
--Apache Airflow: workflow orchestration  
+-Apache Spark: distributed ETL (Redpanda/Kafka events -> Bronze and Silver tables)  
+-Apache Airflow: workflow automation and orchestration  
 -Delta Lake: ACID lakehouse storage  
 -MinIO: S3-compatible object store  
 -AWS S3: cloud-based object store for Databricks  
