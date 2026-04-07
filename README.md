@@ -8,7 +8,8 @@ The full pipeline accounts for raw business event creation, event streaming, dis
 
 Infrastructure is a fully containerized environment, established via docker-compose.yml, as well as secrets stored in .env and spark/conf/spark-defaults.conf  
 
-<img width="217" height="643" alt="image" src="https://github.com/user-attachments/assets/9e6c4665-3bbd-44af-b59b-e36c409ee8a0" />
+<img width="364" height="970" alt="image" src="https://github.com/user-attachments/assets/79f4df97-5f5e-4f30-8e4d-cf4e72bb1aae" />  
+
 
 Final data result, in addition to Bronze/Silver tables:  
 Gold business metrics displayed in an interactive dashboard on Databricks:  
@@ -59,8 +60,12 @@ dag_spark_job_build_bronze:
 dag_spark_job_build_silver-sales and dag_spark_job_build_silver_returns:  
 1. Spark Streaming reads Delta Lake Bronze table data for that partitioned business day  
 2. Delta lake Silver table with just sales data and just returns data is written continuously with structured streaming on MinIO S3 bucket  
-<img width="1728" height="886" alt="image" src="https://github.com/user-attachments/assets/e5f2056c-19b5-4112-9708-282d0b17bd33" />  
-  
+<img width="1728" height="886" alt="image" src="https://github.com/user-attachments/assets/e5f2056c-19b5-4112-9708-282d0b17bd33" />
+
+Databricks scheduled job:  
+1. Collects CSV files from MinIO local storage
+2. Converts into Delta Lake tables in Bronze and Silver categories on AWS S3 bucket for processing in Gold dashboard  
+<img width="783" height="820" alt="image" src="https://github.com/user-attachments/assets/9fd14d0c-6a9e-420d-b421-3e44b235e811" />  
   
 Redpanda Raw Events Example:  
 <img width="540" height="277" alt="image" src="https://github.com/user-attachments/assets/2d460222-fc5a-403b-ab46-eed8aa3854db" />  
