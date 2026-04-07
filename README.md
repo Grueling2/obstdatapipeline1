@@ -75,7 +75,3 @@ Example Silver Sales query results:
   
 Example Schema for books table in MariaDB:  
 <img width="1632" height="191" alt="image" src="https://github.com/user-attachments/assets/4d6a5add-b1a2-4fad-b7c0-cc6e1b2f0490" />  
-  
-  
-Example snippet from Gold Jupyter Notebook  
-<img width="1264" height="734" alt="image" src="https://github.com/user-attachments/assets/264fba1b-5acb-4b06-8669-80936e467790" />
