@@ -1,0 +1,6 @@
+confluent-kafka
+faker
+mysql-connector-python
+requests
+pandas
+minio

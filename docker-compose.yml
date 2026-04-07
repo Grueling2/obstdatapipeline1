@@ -1,0 +1,210 @@
+services:
+  bookstore_producer:
+    build: /home/will/datapipeline/bookstore_producer
+    container_name: bookstore_producer
+    depends_on:
+      - redpanda
+    env_file:
+      - .env
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+      MARIADB_HOST: ${MARIADB_HOST}
+      MARIADB_PORT: ${MARIADB_PORT}
+      MARIADB_USER: ${MARIADB_USER}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+      MARIADB_DATABASE: ${MARIADB_DATABASE}
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
+      AWS_EC2_METADATA_DISABLED: "true"
+      AWS_REGION: us-east-1
+      AWS_ENDPOINT_URL_S3: http://minio:9000
+    volumes:
+      - /home/will/datapipeline/bookstore_producer/state:/app/state
+    networks:
+      - monitoring
+    restart: unless-stopped
+
+  redpanda:
+    image: redpandadata/redpanda:latest
+    container_name: redpanda
+    command:
+      - redpanda
+      - start
+      - --overprovisioned
+      - --smp=1
+      - --node-id=0
+      - --check=false
+      - --kafka-addr=PLAINTEXT://0.0.0.0:9092
+      - --advertise-kafka-addr=PLAINTEXT://redpanda:9092
+    ports:
+      - "9092:9092"
+    volumes:
+      - /home/will/datapipeline/redpanda/data:/var/lib/redpanda/data
+    networks:
+      - monitoring
+    restart: unless-stopped
+
+  redpanda-console:
+    image: docker.redpanda.com/redpandadata/console:latest
+    container_name: redpanda_console
+    depends_on:
+      - redpanda
+    environment:
+      KAFKA_BROKERS: redpanda:9092
+    ports:
+      - "8080:8080"
+    networks:
+      - monitoring
+    restart: unless-stopped
+
+  spark:
+    build: /home/will/datapipeline/spark
+    container_name: spark
+    depends_on:
+      - redpanda
+      - minio
+    env_file:
+      - .env
+    environment:
+      SPARK_LOCAL_IP: spark
+      SPARK_MASTER_HOST: spark
+    ports:
+      - "4040:4040"
+      - "4041:4041"
+    volumes:
+      - /home/will/datapipeline/spark/jobs:/opt/spark/jobs
+      - /home/will/datapipeline/spark/conf:/opt/spark/conf
+    networks:
+      - monitoring
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    env_file:
+      - .env
+    volumes:
+      - /home/will/datapipeline/minio/data:/data
+    networks:
+      - monitoring
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15
+    container_name: airflow_postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: ${AIRFLOW_DB_PASSWORD}
+      POSTGRES_DB: airflow
+    volumes:
+      - /var/lib/postgres-data:/var/lib/postgresql/data
+    networks:
+      - monitoring
+    restart: unless-stopped
+
+  airflow-webserver:
+    build:
+      context: /home/will/datapipeline/airflow
+      dockerfile: Dockerfile
+    container_name: airflow_webserver
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW_FERNET_KEY}
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:${AIRFLOW_DB_PASSWORD}@postgres/airflow
+      AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW_SECRET_KEY}
+    group_add:
+      - 1001
+    tmpfs:
+      - /tmp
+    volumes:
+      - /home/will/datapipeline/airflow/dags:/opt/airflow/dags
+      - /home/will/datapipeline/airflow/logs:/opt/airflow/logs
+      - /home/will/datapipeline/airflow/plugins:/opt/airflow/plugins
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /home/will/datapipeline/spark/exports:/opt/spark/exports
+      - /home/will/datapipeline/bookstore_producer/state:/opt/airflow/state
+    ports:
+      - "8081:8080"
+    command: webserver
+    networks:
+      - monitoring
+    restart: unless-stopped
+
+  airflow-scheduler:
+    build:
+      context: /home/will/datapipeline/airflow
+      dockerfile: Dockerfile
+    container_name: airflow_scheduler
+    depends_on:
+      - airflow-webserver
+    env_file:
+      - .env
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW_FERNET_KEY}
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:${AIRFLOW_DB_PASSWORD}@postgres/airflow
+    group_add:
+      - 1001
+    tmpfs:
+      - /tmp
+    volumes:
+      - /home/will/datapipeline/airflow/dags:/opt/airflow/dags
+      - /home/will/datapipeline/airflow/logs:/opt/airflow/logs
+      - /home/will/datapipeline/airflow/plugins:/opt/airflow/plugins
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /home/will/datapipeline/spark/exports:/opt/spark/exports
+      - /home/will/datapipeline/bookstore_producer/state:/opt/airflow/state
+    command: scheduler
+    networks:
+      - monitoring
+    restart: unless-stopped
+
+  airflow-triggerer:
+    build:
+      context: /home/will/datapipeline/airflow
+      dockerfile: Dockerfile
+    container_name: airflow_triggerer
+    depends_on:
+      - airflow-webserver
+    env_file:
+      - .env
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW_FERNET_KEY}
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:${AIRFLOW_DB_PASSWORD}@postgres/airflow
+    group_add:
+      - 989
+    tmpfs:
+      - /tmp  
+    volumes:
+      - /home/will/datapipeline/airflow/dags:/opt/airflow/dags
+      - /home/will/datapipeline/airflow/logs:/opt/airflow/logs
+      - /home/will/datapipeline/airflow/plugins:/opt/airflow/plugins
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /home/will/datapipeline/spark/exports:/opt/spark/exports
+      - /home/will/datapipeline/bookstore_producer/state:/opt/airflow/state
+    command: triggerer
+    networks:
+      - monitoring
+    restart: unless-stopped
+
+networks:
+  monitoring:
+    external: true
+    name: monitoring_default

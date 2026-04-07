@@ -1,0 +1,16 @@
+.env
+
+airflow/dags/__pycache__/
+airflow/logs/*
+airflow/plugins/
+
+aws/
+
+data/final/*
+!data/final/README.md
+
+minio/
+
+redpanda/
+spark/conf/spark-defaults.conf
+spark/exports/*
