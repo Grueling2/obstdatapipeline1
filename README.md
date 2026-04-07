@@ -1,37 +1,30 @@
-Data engineering platform simulating a multi‑location bookstore. Includes event streaming (Redpanda/Kafka), distributed processing (Spark), workflow orchestration (Airflow), Delta Lake (Bronze/Silver), MinIO S3 storage, MariaDB SQL integration, and interactive Gold business intelligence via Databricks.  
-<img width="1866" height="1040" alt="image" src="https://github.com/user-attachments/assets/51e11c01-552b-41be-a840-5886f5a05c73" />  
-  
-  
-This project simulates an end-to-end data engineering pipeline for a simulated three-location bookstore company in Wisconsin.
-The custom Docker container 'bookstore_producer' simulates business events with weights based on store location and categories of business events (browsing, returned items, sales, add-to-cart).  
-The full pipeline accounts for raw business event creation, event streaming, distributed processing, workflow orchestration, lakehouse modeling and analytics.  
-  
-Infrastructure is a fully containerized environment, established via docker-compose.yml, as well as secrets stored in .env and spark/conf/spark-defaults.conf  
-  
+Data engineering pipeline (Raw Events -> Bronze -> Silver -> Gold) simulating a multi‑location bookstore. Includes event streaming (Redpanda/Kafka), distributed processing (Spark), workflow orchestration (Airflow), Delta Lake (Bronze/Silver), MinIO S3-compatible local storage and AWS S3 cloud storage, MariaDB SQL integration, and interactive Gold business intelligence dashboards via Databricks.  
+    
+Project infrastructure uses containers established via docker-compose.yml, as well as secrets stored in .env and spark/conf/spark-defaults.conf  The custom Docker container 'bookstore_producer' simulates business events with various weighted preferences based on store location and categories of business events (browsing, returned items, sales, add-to-cart).  
 <img width="364" height="970" alt="image" src="https://github.com/user-attachments/assets/79f4df97-5f5e-4f30-8e4d-cf4e72bb1aae" />  
   
-  
-Final data result, in addition to Bronze/Silver tables:  
-Gold business metrics displayed in an interactive dashboard on Databricks:  
+Databricks interactive dashboard showing the following Gold-tier metrics for business stakeholders:  
 1. Total sales today  
 2. Sales over time, split up by store  
 3. Top 3 books sold today  
 4. Biggest single increase, and biggest single decrease in popularity of a book over the preceding 7 days.  
 5. Top 5 best-selling authors over the preceding 7 days.  
-
+<img width="1866" height="1040" alt="image" src="https://github.com/user-attachments/assets/51e11c01-552b-41be-a840-5886f5a05c73" />  
+  
 Technologies Used:  
--Databricks: analytics and business intelligence for stakeholders  
+-Databricks: analytics and business intelligence  
 -Redpanda/Kafka: event streaming  
 -Apache Spark: distributed ETL  
--Apache Airflow: orchestration  
+-Apache Airflow: workflow orchestration  
 -Delta Lake: ACID lakehouse storage  
--MinIO, S3 compatible object store  
+-MinIO: S3-compatible object store  
+-AWS S3: cloud-based object store for Databricks  
 -MariaDB: reference data  
 -Jupyter Notebooks: analytics  
 -Docker Compose: infrastructure automation  
 -Python: pipeline logic  
   
-Workflow automation: Apache Airflow DAGs which orchestrate the following pipelines  
+Apache Airflow DAGs orchestrate the following pipelines  
   
 dag_catalog_loader:  
 1. Bookstore_producer container runs catalog_loader.py script  
@@ -46,21 +39,24 @@ dag_run_bookstore_simulation_day_cycle:
 3. Bookstore_producer.py script is stopped  
 4. Popularity values based on simulated day sales get updated in MariaDB  
 5. Increment day_index to prepare for next business day
-6. Export MariaDB tables into CSV files and placing into MinIO for processing later  
+6. Export MariaDB tables into CSV files and placing into MinIO for processing in a later DAG  
 <img width="2070" height="760" alt="image" src="https://github.com/user-attachments/assets/2ce31e6a-9983-4995-89fc-17a83ebb5812" />  
-  
   
   
 dag_spark_job_build_bronze:  
 1. Spark Streaming reads Redpanda/Kafka raw business events  
-2. Delta Lake Bronze table data is written continuously with structured streaming on MinIO S3 bucket  
+2. Delta Lake Bronze table data is written continuously with structured streaming on MinIO  
 <img width="1728" height="886" alt="image" src="https://github.com/user-attachments/assets/f32a5180-6c2a-4af0-a69d-2718b41ee8c0" />  
   
   
-dag_spark_job_build_silver-sales and dag_spark_job_build_silver_returns:  
+dag_spark_job_build_silver_sales and dag_spark_job_build_silver_returns:  
 1. Spark Streaming reads Delta Lake Bronze table data for that partitioned business day  
-2. Delta lake Silver table with just sales data and just returns data is written continuously with structured streaming on MinIO S3 bucket  
+2. Delta lake Silver table with just sales data and just returns data is written continuously with structured streaming on MinIO  
 <img width="1728" height="886" alt="image" src="https://github.com/user-attachments/assets/e5f2056c-19b5-4112-9708-282d0b17bd33" />
+
+
+dag_sync_minio_to_aws_s3:
+1. MinIO storage gets synced to AWS S3 cloud storage object store, copying Bronze and Silver Delta Lake tables with all checkpoints and metadata into AWS to be utilized in the Databricks platform catalog  
   
   
 Databricks scheduled job:  
